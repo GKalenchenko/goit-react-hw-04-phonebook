@@ -2,85 +2,61 @@ import { ContactElement } from 'components/ContactElement/ContactElement';
 import { ContactForm } from 'components/ContactForm/ContactForm';
 import { ContactList } from 'components/ContactList/ContactList';
 import { SearchFilter } from 'components/SearchFilter/SearchFilter';
-import { Component } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Wrapper } from './App.styled';
 
-export class App extends Component {
-  state = {
-    contacts: [
-      { id: 'id-1', name: 'Test Contact', tel: '459-12-56' },
-      { id: 'id-2', name: 'Delete Me', tel: '443-89-12' },
-    ],
-    name: '',
-    filter: '',
-  };
+export const App = () => {
+  const [contacts, setContacts] = useState([]);
+  const [filter, setFilter] = useState('');
 
-  onSubmit = contact => {
-    const { contacts } = this.state;
-    const { name } = contact;
-
-    if (contacts.flatMap(el => el.name).includes(name)) {
-      alert(`${name} already in contacts`);
+  const onSubmit = newContact => {
+    if (contacts.flatMap(el => el.name).includes(newContact.name)) {
+      alert(`${newContact.name} already in contacts`);
       return;
     }
 
-    this.setState(({ contacts }) => {
-      return { contacts: [...contacts, contact] };
+    setContacts(prevContacts => {
+      return [...prevContacts, newContact];
     });
   };
 
-  onChange = ({ target }) => {
-    this.setState({ filter: target.value });
+  const onChange = ({ target }) => {
+    setFilter(target.value);
   };
 
-  getContact = () => {
-    const { contacts, filter } = this.state;
-
-    return contacts.filter(contact =>
-      contact.name.toLowerCase().includes(filter.toLowerCase())
-    );
+  const onClick = value => {
+    setContacts(contacts.filter(contact => contact.name !== value));
   };
 
-  onClick = value => {
-    const newArray = this.state.contacts.filter(
-      contact => contact.name !== value
-    );
-    this.setState({ contacts: newArray });
-  };
-
-  componentDidMount() {
+  useEffect(() => {
     if (JSON.parse(localStorage.getItem('contacts')) ?? false) {
-      this.setState({
-        contacts: [...JSON.parse(localStorage.getItem('contacts'))],
-      });
+      setContacts([...JSON.parse(localStorage.getItem('contacts'))]);
+      return;
+    }
+  }, []);
+
+  const isMounted = useRef(false);
+
+  useEffect(() => {
+    if (!isMounted.current) {
+      isMounted.current = true;
       return;
     }
 
-    this.setState({
-      contacts: [...this.state.contacts],
-    });
-  }
-
-  componentDidUpdate(_, { contacts }) {
-    if (this.state.contacts !== contacts) {
-      try {
-        localStorage.setItem('contacts', JSON.stringify(this.state.contacts));
-      } catch (error) {
-        console.log(error);
-      }
+    try {
+      localStorage.setItem('contacts', JSON.stringify(contacts));
+    } catch (error) {
+      console.log(error);
     }
-  }
+  }, [contacts]);
 
-  render() {
-    const contacts = this.getContact();
-    return (
-      <Wrapper>
-        <ContactForm contacts={this.state.contacts} onSubmit={this.onSubmit} />
-        <ContactList>
-          <SearchFilter onChange={this.onChange} />
-          <ContactElement contacts={contacts} onClick={this.onClick} />
-        </ContactList>
-      </Wrapper>
-    );
-  }
-}
+  return (
+    <Wrapper>
+      <ContactForm contacts={contacts} onSubmit={onSubmit} />
+      <ContactList>
+        <SearchFilter onChange={onChange} />
+        <ContactElement contacts={contacts} onClick={onClick} />
+      </ContactList>
+    </Wrapper>
+  );
+};
