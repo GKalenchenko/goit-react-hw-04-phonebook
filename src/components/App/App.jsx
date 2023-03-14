@@ -24,6 +24,12 @@ export const App = () => {
     setFilter(target.value);
   };
 
+  const getContact = () => {
+    return contacts.filter(contact =>
+      contact.name.toLowerCase().includes(filter.toLowerCase())
+    );
+  };
+
   const onClick = value => {
     setContacts(contacts.filter(contact => contact.name !== value));
   };
@@ -50,12 +56,14 @@ export const App = () => {
     }
   }, [contacts]);
 
+  const filteredContacts = getContact();
+
   return (
     <Wrapper>
-      <ContactForm contacts={contacts} onSubmit={onSubmit} />
+      <ContactForm contacts={filteredContacts} onSubmit={onSubmit} />
       <ContactList>
         <SearchFilter onChange={onChange} />
-        <ContactElement contacts={contacts} onClick={onClick} />
+        <ContactElement contacts={filteredContacts} onClick={onClick} />
       </ContactList>
     </Wrapper>
   );
